@@ -1,0 +1,12 @@
+apiVersion: v2
+name: fastapi-ip
+type: application
+version: 0.1.0
+appVersion: "1.0"
+maintainers:
+  - name: Esipov Ilya
+    email: esipov54321@gmail.com
+dependencies:
+  - name: postgresql
+    version: 18.1.13
+    repository: "https://charts.bitnami.com/bitnami"

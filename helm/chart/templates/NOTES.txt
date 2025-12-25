@@ -1,0 +1,10 @@
+Приложение успешно развернуто.
+
+1. Проверить статус:
+   kubectl get pods -n myapp
+
+2. Открыть через ingress:
+   http://{{ .Values.ingress.hostname }}/
+
+3. Или через port-forward:
+   kubectl port-forward deploy/{{ include "fastapi-ip.fullname" . }} 8000:{{ .Values.app.port }} -n myapp

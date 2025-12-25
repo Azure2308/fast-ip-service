@@ -1,0 +1,44 @@
+replicaCount: 1
+
+image:
+  repository: "ilyaesipov/fastapi-ip"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  hostname: "getip.local"
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+  tls: false
+
+app:
+  port: 8000
+  type: "IPAPI"
+
+postgresql:
+  auth:
+    username: "postgres"
+    database: "postgres"
+    password: "password"
+  host:
+    postgresql: "my-release-postgresql"
+  port: 5432
+  primary:
+    service:
+      ports:
+        postgresql: 5432
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

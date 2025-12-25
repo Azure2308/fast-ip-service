@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "fastapi-ip.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "fastapi-ip.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "fastapi-ip.name" . }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:18-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER; do
+                echo "Waiting for Postgres..."
+                sleep 2
+              done
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_USER
+
+        - name: run-migrations
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running Alembic migrations..."
+              poetry run alembic upgrade head
+          env:
+            - name: TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: TYPE
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: PORT
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD
+
+      containers:
+        - name: fastapi-ip
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+          env:
+            - name: TYPE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: TYPE
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: PORT
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "fastapi-ip.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD

@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: ip-db
+    ports:
+      - "127.0.0.1:5441:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ip-app
+    environment:
+      TYPE: ${TYPE}
+      PORT: ${PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./src/migrations/versions:/app/src/migrations/versions
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
