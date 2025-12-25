@@ -59,3 +59,7 @@ helm uninstall my-release -n myapp
   "myIP": "145.10.34.3",
   "type": "IPAPI"
 }
+```
+
+## Скриншот успешной работы
+<img width="1790" height="1022" alt="image" src="https://github.com/user-attachments/assets/17f8b5c4-7df6-4d13-8771-eba1d99296cf" />
